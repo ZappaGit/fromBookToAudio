@@ -11,7 +11,7 @@ import sys
 # So that accented characters print correctly in the Windows console.
 sys.stdout.reconfigure(encoding="utf-8")
 
-ROOT_DIR = pathlib.Path(__file__).parent
+ROOT_DIR = pathlib.Path(__file__).resolve().parent.parent   # project root, one level above code/
 INPUT_DIR = ROOT_DIR / "input"
 WORK_DIR = ROOT_DIR / "work"
 OUTPUT_DIR = ROOT_DIR / "output"

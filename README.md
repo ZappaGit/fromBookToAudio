@@ -45,14 +45,14 @@ Then, with your book:
 
 ```powershell
 # 1. Copy the photos to input\my-book\ (read in file-name order: 001.jpg, 002.jpg…)
-.\.venv\Scripts\python.exe step1_ocr.py my-book
+.\.venv\Scripts\python.exe code\step1_ocr.py my-book
 
 # 2. Generate the text and review it
-.\.venv\Scripts\python.exe step2_text.py my-book
+.\.venv\Scripts\python.exe code\step2_text.py my-book
 code work\my-book\book.txt
 
 # 3. Generate the audiobook
-.\.venv\Scripts\python.exe step3_audio.py my-book
+.\.venv\Scripts\python.exe code\step3_audio.py my-book
 ```
 
 The result is in `output\my-book\`.
@@ -60,7 +60,7 @@ The result is in `output\my-book\`.
 Or run all three steps with one command:
 
 ```powershell
-.\.venv\Scripts\python.exe run.py my-book [--force]
+.\.venv\Scripts\python.exe code\run.py my-book [--force]
 ```
 
 It stops at the first failing step with the reason and a hint (exit code 1, 2 or 3 = failed step).
@@ -69,13 +69,31 @@ safe; `--force` redoes the OCR and rebuilds `book.txt` from scratch.
 
 > **Note:** the Spanish voice needs [espeak-ng](https://github.com/espeak-ng/espeak-ng/releases) installed on the system.
 
+## 📁 Project layout
+
+```
+fromBookToAudio/
+├── code/                  all Python code
+│   ├── run.py             runs steps 1 → 2 → 3 with one command
+│   ├── step1_ocr.py
+│   ├── step2_text.py
+│   ├── step3_audio.py
+│   ├── config.py          all settings
+│   └── test_generate_pages.py
+├── input/<book>/          your photos or scans (not committed)
+├── work/<book>/           OCR results, book.txt, audio cache (not committed)
+└── output/<book>/         the finished MP3s (not committed)
+```
+
+`input/`, `work/` and `output/` always live at the project root, whatever folder you run the commands from.
+
 ## 🧩 The three steps
 
 | Step | Script | Input | Output |
 |------|--------|-------|--------|
-| 1. OCR | `step1_ocr.py` | `input/<book>/*.jpg` | `work/<book>/ocr/*.json` and `ocr_report.csv` |
-| 2. Text | `step2_text.py` | the JSON files from step 1 | `work/<book>/book.txt` |
-| 3. Audio | `step3_audio.py` | `book.txt` | `output/<book>/NN-title.mp3` |
+| 1. OCR | `code/step1_ocr.py` | `input/<book>/*.jpg` | `work/<book>/ocr/*.json` and `ocr_report.csv` |
+| 2. Text | `code/step2_text.py` | the JSON files from step 1 | `work/<book>/book.txt` |
+| 3. Audio | `code/step3_audio.py` | `book.txt` | `output/<book>/NN-title.mp3` |
 
 Re-running is safe:
 
@@ -87,12 +105,12 @@ Re-running is safe:
 
 - One paragraph per block, separated by a blank line.
 - A line starting with `# ` is a chapter title: it is read aloud and starts a new MP3.
-- Lines starting with *Chapter, Part, Prologue, Epilogue, Introduction or Preface* (Spanish equivalents included) are detected as titles automatically (`CHAPTER_PATTERN` in `config.py`).
+- Lines starting with *Chapter, Part, Prologue, Epilogue, Introduction or Preface* (Spanish equivalents included) are detected as titles automatically (`CHAPTER_PATTERN` in `code/config.py`).
 
 ### What to check before step 3
 
 - **`ocr_report.csv`**: pages marked `review` have a low mean confidence.
-- **Repeated headers** (book title on every page): set `MARGIN_TOP` in `config.py` and re-run step 1 with `--force`.
+- **Repeated headers** (book title on every page): set `MARGIN_TOP` in `code/config.py` and re-run step 1 with `--force`.
 - **Footnotes, captions and tables** are read as normal text. Delete them from `book.txt` if they should not be heard.
 - **Open book photographed as one image**: set `DOUBLE_PAGES = True`.
 - **Pages that come out sideways** (scans or photos without orientation data): set `ROTATE` to 90, 180 or 270 and re-run step 1 with `--force`.
@@ -100,7 +118,7 @@ Re-running is safe:
 
 ## ⚙️ Configuration
 
-All settings live in [`config.py`](config.py), with comments:
+All settings live in [`code/config.py`](code/config.py), with comments:
 
 | Setting | Default | Purpose |
 |---------|---------|---------|
@@ -132,13 +150,13 @@ End-to-end test with two invented pages: one clean scan and one that imitates a 
 To run the test yourself:
 
 ```powershell
-.\.venv\Scripts\python.exe test_generate_pages.py
-.\.venv\Scripts\python.exe step1_ocr.py test
-.\.venv\Scripts\python.exe step2_text.py test
-.\.venv\Scripts\python.exe step3_audio.py test
+.\.venv\Scripts\python.exe code\test_generate_pages.py
+.\.venv\Scripts\python.exe code\step1_ocr.py test
+.\.venv\Scripts\python.exe code\step2_text.py test
+.\.venv\Scripts\python.exe code\step3_audio.py test
 ```
 
-`test_generate_pages.py` writes the reference text to `work/test/expected.txt`, so you can compare it with the OCR result. The test text is in Spanish because the default voice is Spanish.
+`code/test_generate_pages.py` writes the reference text to `work/test/expected.txt`, so you can compare it with the OCR result. The test text is in Spanish because the default voice is Spanish.
 
 > The audio of the test has not been evaluated by ear yet: voice quality and pauses are pending.
 
