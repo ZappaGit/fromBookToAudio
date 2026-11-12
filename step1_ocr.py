@@ -21,8 +21,19 @@ FORCE = "--force" in sys.argv
 
 
 def load_pages(path):
-    """Open the image, fix the camera rotation, and return one or two pages."""
+    """Open the image, fix its rotation, crop the edges, and return one or two pages."""
     image = ImageOps.exif_transpose(Image.open(path)).convert("RGB")
+    if config.ROTATE:
+        if config.ROTATE not in (90, 180, 270):
+            sys.exit(f"ROTATE must be 0, 90, 180 or 270 (got {config.ROTATE})")
+        image = image.rotate(-config.ROTATE, expand=True)   # PIL rotates counter-clockwise
+    left, top, right, bottom = config.CROP
+    if any(config.CROP):
+        if min(config.CROP) < 0 or left + right >= 1 or top + bottom >= 1:
+            sys.exit(f"CROP fractions must be >= 0 and leave some image (got {config.CROP})")
+        width, height = image.size
+        image = image.crop((round(width * left), round(height * top),
+                            round(width * (1 - right)), round(height * (1 - bottom))))
     if config.DOUBLE_PAGES:
         width, height = image.size
         halves = [image.crop((0, 0, width // 2, height)), image.crop((width // 2, 0, width, height))]

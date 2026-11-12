@@ -20,7 +20,11 @@ OUTPUT_DIR = ROOT_DIR / "output"
 OCR_ALPHABET = "LATIN"        # RapidOCR model: LATIN covers Spanish, English, French, etc.
 IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".tif", ".tiff", ".bmp", ".webp"}
 MAX_SIDE = 2400               # px; larger photos are downscaled (faster, same text)
-DOUBLE_PAGES = False          # True if each image holds two pages (open book)
+ROTATE = 0                    # degrees clockwise (0, 90, 180, 270) for images that come out sideways;
+                              # applied after the automatic EXIF correction
+CROP = (0.0, 0.0, 0.0, 0.0)   # fraction to cut off each edge (left, top, right, bottom) after rotating,
+                              # e.g. (0.05, 0.0, 0.05, 0.10) to remove fingers, desk or scanner borders
+DOUBLE_PAGES = False         # True if each image holds two pages (open book)
 MARGIN_TOP = 0.0              # fraction of the height to ignore at the top (headers), e.g. 0.07
 MARGIN_BOTTOM = 0.0           # fraction of the height to ignore at the bottom (footers)
 MIN_CONFIDENCE = 0.30         # text fragments below this confidence are dropped (stains, noise)

@@ -85,6 +85,8 @@ Re-running is safe:
 - **Repeated headers** (book title on every page): set `MARGIN_TOP` in `config.py` and re-run step 1 with `--force`.
 - **Footnotes, captions and tables** are read as normal text. Delete them from `book.txt` if they should not be heard.
 - **Open book photographed as one image**: set `DOUBLE_PAGES = True`.
+- **Pages that come out sideways** (scans or photos without orientation data): set `ROTATE` to 90, 180 or 270 and re-run step 1 with `--force`.
+- **Fingers, desk or scanner borders around the page**: cut them off with `CROP`, e.g. `(0.05, 0.0, 0.05, 0.10)` for left, top, right, bottom.
 
 ## ⚙️ Configuration
 
@@ -97,6 +99,8 @@ All settings live in [`config.py`](config.py), with comments:
 | `SPEED` | `1.0` | 0.8 slower, 1.2 faster |
 | `PAUSE_PARAGRAPH` / `PAUSE_TITLE` | `0.6` / `1.2` s | Silence between paragraphs and after a title |
 | `OUTPUT_FORMAT` | `MP3` | Also `FLAC` or `WAV` |
+| `ROTATE` | `0` | Turns every image 90, 180 or 270 degrees clockwise before OCR |
+| `CROP` | `(0, 0, 0, 0)` | Fraction cut off each edge (left, top, right, bottom) before OCR |
 | `DOUBLE_PAGES` | `False` | Splits each photo into two pages |
 | `REVIEW_CONFIDENCE` | `0.90` | Threshold for flagging pages in the OCR report |
 
