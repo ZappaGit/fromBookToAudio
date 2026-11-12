@@ -1,39 +1,39 @@
-# 🎧 genAudioLibro
+# 🎧 fromBookToAudio
 
-**De las fotos de un libro a un audiolibro, todo en local y sin GPU.**
+**From the photos of a book to an audiobook, fully local and CPU-only.**
 
-Un pipeline de tres pasos que convierte páginas escaneadas o fotografiadas en un audiolibro en MP3, con un archivo por capítulo. El OCR usa RapidOCR y la voz usa Kokoro-82M, ambos en CPU. El texto no sale del equipo.
+A three-step pipeline that turns scanned or photographed book pages into an audiobook in MP3, one file per chapter. OCR runs with RapidOCR and speech with Kokoro-82M, both on CPU. The text never leaves your machine.
 
 ![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)
-![Estado](https://img.shields.io/badge/estado-prueba%20sint%C3%A9tica%20OK-brightgreen)
-![Licencia](https://img.shields.io/badge/licencia-MIT-blue)
-![Sin GPU](https://img.shields.io/badge/GPU-no%20necesaria-orange)
+![Status](https://img.shields.io/badge/status-synthetic%20test%20passing-brightgreen)
+![License](https://img.shields.io/badge/license-MIT-blue)
+![No GPU](https://img.shields.io/badge/GPU-not%20required-orange)
 
 ---
 
-## ✨ Cómo funciona
+## ✨ How it works
 
 ```mermaid
 flowchart LR
-    A["📷 Páginas<br/>entrada/libro/*.jpg"] --> B["1 · OCR<br/>RapidOCR · PP-OCRv5"]
-    B --> C["📝 Revisión a mano<br/>trabajo/libro/libro.txt"]
+    A["📷 Pages<br/>input/book/*.jpg"] --> B["1 · OCR<br/>RapidOCR · PP-OCRv5"]
+    B --> C["📝 Manual review<br/>work/book/book.txt"]
     C --> D["2 · Audio<br/>Kokoro-82M"]
-    D --> E["🎧 Un MP3 por capítulo<br/>salida/libro/*.mp3"]
+    D --> E["🎧 One MP3 per chapter<br/>output/book/*.mp3"]
 ```
 
-1. **OCR.** Lee cada página, guarda la posición y la confianza de cada línea y marca las páginas dudosas.
-2. **Texto.** Ordena los fragmentos, quita los números de página y genera `libro.txt`. Ese archivo se **corrige a mano** antes de seguir, porque ningún OCR acierta el 100 % y un error de lectura se oye en el audio.
-3. **Audio.** Sintetiza cada párrafo con Kokoro, añade pausas y monta un MP3 por capítulo.
+1. **OCR.** Reads each page, keeps the position and confidence of every line, and flags doubtful pages.
+2. **Text.** Orders the fragments, removes page numbers and builds `book.txt`. You **correct this file by hand** before going on, because no OCR is 100 % accurate and a misread word is heard in the audio.
+3. **Audio.** Synthesizes each paragraph with Kokoro, adds pauses and assembles one MP3 per chapter.
 
-Cada paso se puede repetir sin perder trabajo: si se interrumpe, retoma donde se quedó.
+Every step can be re-run without losing work: if it is interrupted, it picks up where it stopped.
 
-## 🚀 Inicio rápido
+## 🚀 Quick start
 
-Probado en Windows 11 con Python 3.12.
+Tested on Windows 11 with Python 3.12.
 
 ```powershell
-git clone https://github.com/ZappaGit/lab-genAudioLibro.git
-cd lab-genAudioLibro
+git clone https://github.com/ZappaGit/fromBookToAudio.git
+cd fromBookToAudio
 
 python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install --upgrade pip
@@ -41,115 +41,115 @@ python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 ```
 
-Después, con tu libro:
+Then, with your book:
 
 ```powershell
-# 1. Copia las fotos a entrada\mi-libro\ (se leen por orden de nombre: 001.jpg, 002.jpg…)
-.\.venv\Scripts\python.exe paso1_ocr.py mi-libro
+# 1. Copy the photos to input\my-book\ (read in file-name order: 001.jpg, 002.jpg…)
+.\.venv\Scripts\python.exe step1_ocr.py my-book
 
-# 2. Genera el texto y revísalo
-.\.venv\Scripts\python.exe paso2_texto.py mi-libro
-code trabajo\mi-libro\libro.txt
+# 2. Generate the text and review it
+.\.venv\Scripts\python.exe step2_text.py my-book
+code work\my-book\book.txt
 
-# 3. Genera el audiolibro
-.\.venv\Scripts\python.exe paso3_audio.py mi-libro
+# 3. Generate the audiobook
+.\.venv\Scripts\python.exe step3_audio.py my-book
 ```
 
-El resultado queda en `salida\mi-libro\`.
+The result is in `output\my-book\`.
 
-> **Nota:** para la voz en español hace falta [espeak-ng](https://github.com/espeak-ng/espeak-ng/releases) instalado en el sistema.
+> **Note:** the Spanish voice needs [espeak-ng](https://github.com/espeak-ng/espeak-ng/releases) installed on the system.
 
-## 🧩 Los tres pasos
+## 🧩 The three steps
 
-| Paso | Script | Entrada | Resultado |
-|------|--------|---------|-----------|
-| 1. OCR | `paso1_ocr.py` | `entrada/<libro>/*.jpg` | `trabajo/<libro>/ocr/*.json` y `ocr_informe.csv` |
-| 2. Texto | `paso2_texto.py` | los JSON del paso 1 | `trabajo/<libro>/libro.txt` |
-| 3. Audio | `paso3_audio.py` | `libro.txt` | `salida/<libro>/NN-titulo.mp3` |
+| Step | Script | Input | Output |
+|------|--------|-------|--------|
+| 1. OCR | `step1_ocr.py` | `input/<book>/*.jpg` | `work/<book>/ocr/*.json` and `ocr_report.csv` |
+| 2. Text | `step2_text.py` | the JSON files from step 1 | `work/<book>/book.txt` |
+| 3. Audio | `step3_audio.py` | `book.txt` | `output/<book>/NN-title.mp3` |
 
-Las reejecuciones son seguras:
+Re-running is safe:
 
-- El paso 1 salta las páginas que ya tienen JSON (`--forzar` las repite).
-- El paso 2 no sobrescribe `libro.txt` si ya existe, para no borrar tus correcciones (`--forzar` lo regenera).
-- El paso 3 guarda el audio de cada párrafo en `trabajo/<libro>/audio/`. Cada archivo lleva un hash del texto y de la voz, así que corregir una frase solo regenera ese párrafo. Cambiar la voz o la velocidad obliga a sintetizar todo de nuevo.
+- Step 1 skips pages that already have JSON (`--force` redoes them).
+- Step 2 never overwrites an existing `book.txt`, so your corrections survive (`--force` regenerates it).
+- Step 3 saves the audio of each paragraph in `work/<book>/audio/`, named after a hash of the text and voice settings. Fixing one sentence only regenerates that paragraph. Changing the voice or speed regenerates everything.
 
-### Formato de `libro.txt`
+### Format of `book.txt`
 
-- Un párrafo por bloque, separados por una línea en blanco.
-- Una línea que empieza por `# ` es un título de capítulo: se lee en voz alta y abre un MP3 nuevo.
-- Los títulos se detectan solos si empiezan por *Capítulo, Parte, Prólogo, Epílogo, Introducción o Prefacio* (`PATRON_CAPITULO` en `config.py`).
+- One paragraph per block, separated by a blank line.
+- A line starting with `# ` is a chapter title: it is read aloud and starts a new MP3.
+- Lines starting with *Chapter, Part, Prologue, Epilogue, Introduction or Preface* (Spanish equivalents included) are detected as titles automatically (`CHAPTER_PATTERN` in `config.py`).
 
-### Qué revisar antes del paso 3
+### What to check before step 3
 
-- **`ocr_informe.csv`**: las páginas con estado `revisar` tienen una confianza media baja.
-- **Cabeceras repetidas** (título del libro en cada página): ajusta `MARGEN_SUPERIOR` en `config.py` y repite el paso 1 con `--forzar`.
-- **Notas al pie, pies de foto y tablas**: se leen como texto normal. Bórralos de `libro.txt` si no deben oírse.
-- **Libro abierto con dos páginas por foto**: pon `PAGINAS_DOBLES = True`.
+- **`ocr_report.csv`**: pages marked `review` have a low mean confidence.
+- **Repeated headers** (book title on every page): set `MARGIN_TOP` in `config.py` and re-run step 1 with `--force`.
+- **Footnotes, captions and tables** are read as normal text. Delete them from `book.txt` if they should not be heard.
+- **Open book photographed as one image**: set `DOUBLE_PAGES = True`.
 
-## ⚙️ Configuración
+## ⚙️ Configuration
 
-Todos los parámetros están en [`config.py`](config.py), con comentarios en español:
+All settings live in [`config.py`](config.py), with comments:
 
-| Parámetro | Valor por defecto | Para qué sirve |
-|-----------|-------------------|----------------|
-| `VOZ` | `ef_dora` | Voz de Kokoro (`ef_dora`, `em_alex`, `em_santa`; admite mezclas como `"ef_dora,em_alex"`) |
-| `IDIOMA_VOZ` | `e` | Idioma de Kokoro (`e` español, `a` inglés EE. UU.) |
-| `VELOCIDAD` | `1.0` | 0.8 más lento, 1.2 más rápido |
-| `PAUSA_PARRAFO` / `PAUSA_TITULO` | `0.6` / `1.2` s | Silencios entre párrafos y después de un título |
-| `FORMATO_SALIDA` | `MP3` | También `FLAC` o `WAV` |
-| `PAGINAS_DOBLES` | `False` | Divide cada foto en dos páginas |
-| `CONFIANZA_AVISO` | `0.90` | Umbral de aviso en el informe de revisión del OCR |
+| Setting | Default | Purpose |
+|---------|---------|---------|
+| `VOICE` | `ef_dora` | Kokoro voice (`ef_dora`, `em_alex`, `em_santa`; mixes like `"ef_dora,em_alex"` are allowed) |
+| `VOICE_LANG` | `e` | Kokoro language (`e` Spanish, `a` US English) |
+| `SPEED` | `1.0` | 0.8 slower, 1.2 faster |
+| `PAUSE_PARAGRAPH` / `PAUSE_TITLE` | `0.6` / `1.2` s | Silence between paragraphs and after a title |
+| `OUTPUT_FORMAT` | `MP3` | Also `FLAC` or `WAV` |
+| `DOUBLE_PAGES` | `False` | Splits each photo into two pages |
+| `REVIEW_CONFIDENCE` | `0.90` | Threshold for flagging pages in the OCR report |
 
-## 📊 Resultados de la prueba
+## 📊 Test results
 
-Prueba sintética de principio a fin: dos páginas con texto inventado, una escaneada limpia y otra que imita una foto (fondo gris, giro de 1,2°, JPEG). Ejecutada sin GPU: Windows 11, Python 3.12.10, 15,7 GB de RAM, Intel UHD, todo en CPU.
+End-to-end test with two invented pages: one clean scan and one that imitates a photo (grey background, 1.2° rotation, JPEG). Run without a GPU: Windows 11, Python 3.12.10, 15.7 GB RAM, Intel UHD, everything on CPU.
 
-| Medida | Valor |
-|--------|-------|
-| OCR (RapidOCR, modelos ya descargados) | 4,9 s y 4,2 s por página |
-| Confianza media del OCR | 0,99 en las dos páginas |
-| Texto obtenido frente al esperado | **idéntico** (863 caracteres, 4 párrafos, 1 título) |
-| Carga de Kokoro | 8,3 s |
-| Síntesis | 27,0 s para 50,9 s de voz (**RTF 0,53**) |
-| Archivo final | 54,5 s con pausas, 358 KB, 24 kHz mono |
+| Measure | Value |
+|---------|-------|
+| OCR (RapidOCR, models already downloaded) | 4.9 s and 4.2 s per page |
+| Mean OCR confidence | 0.99 on both pages |
+| Text obtained vs. expected | **identical** (863 characters, 4 paragraphs, 1 title) |
+| Kokoro load time | 8.3 s |
+| Synthesis | 27.0 s for 50.9 s of speech (**RTF 0.53**) |
+| Final file | 54.5 s with pauses, 358 KB, 24 kHz mono |
 
-**Estimación para un libro de 300 páginas** *(estimación: extrapolación lineal de la prueba)*: unos 25 min de OCR y unas 5 horas de síntesis para ~9 horas de audio. Como el paso 3 retoma donde se quedó, el trabajo se puede repartir en varias sesiones.
+**Estimate for a 300-page book** *(estimate: linear extrapolation from the test)*: about 25 min of OCR and about 5 hours of synthesis for roughly 9 hours of audio. Because step 3 resumes where it stopped, the work can be split across several sessions.
 
-Para repetir la prueba:
+To run the test yourself:
 
 ```powershell
-.\.venv\Scripts\python.exe prueba_generar_paginas.py
-.\.venv\Scripts\python.exe paso1_ocr.py prueba
-.\.venv\Scripts\python.exe paso2_texto.py prueba
-.\.venv\Scripts\python.exe paso3_audio.py prueba
+.\.venv\Scripts\python.exe test_generate_pages.py
+.\.venv\Scripts\python.exe step1_ocr.py test
+.\.venv\Scripts\python.exe step2_text.py test
+.\.venv\Scripts\python.exe step3_audio.py test
 ```
 
-`prueba_generar_paginas.py` deja el texto de referencia en `trabajo/prueba/esperado.txt`, para comparar con el resultado del OCR.
+`test_generate_pages.py` writes the reference text to `work/test/expected.txt`, so you can compare it with the OCR result. The test text is in Spanish because the default voice is Spanish.
 
-> El audio de la prueba no ha sido valorado de oído todavía: la calidad de la voz y de las pausas está pendiente.
+> The audio of the test has not been evaluated by ear yet: voice quality and pauses are pending.
 
-## 🧪 Decisiones técnicas
+## 🧪 Technical decisions
 
-- **RapidOCR en lugar de EasyOCR.** Con el mismo español, EasyOCR leía `—` como `~`, `¿Qué` como `cQué` y `«…»` como `<…)`, y tardaba unas cuatro veces más por página (20,8 s y 17,1 s). RapidOCR (modelo PP-OCRv5 sobre ONNX Runtime) leyó las dos páginas sin esos errores y se instala solo con pip.
-- **Sin LLM para corregir el OCR.** Un modelo pequeño puede cambiar palabras correctas o inventar texto, y el error no se notaría hasta oírlo. La corrección se hace a mano sobre `libro.txt`.
-- **Sin ffmpeg.** El MP3 lo escribe `soundfile` (libsndfile). Hay un archivo por capítulo; no se genera un M4B con capítulos.
+- **RapidOCR instead of EasyOCR.** On the same Spanish pages, EasyOCR read `—` as `~`, `¿Qué` as `cQué` and `«…»` as `<…)`, and it was about four times slower (20.8 s and 17.1 s per page). RapidOCR (PP-OCRv5 model on ONNX Runtime) read both pages without those errors and installs with pip alone.
+- **No LLM to correct the OCR.** A small model can change correct words or invent text, and the error would go unnoticed until heard. Corrections are made by hand in `book.txt`.
+- **No ffmpeg.** The MP3 is written by `soundfile` (libsndfile). There is one file per chapter; chapter-marked M4B is not generated.
 
-## ⚠️ Límites conocidos
+## ⚠️ Known limits
 
-- **La prueba es sintética.** Demuestra que el proceso funciona de principio a fin, no la calidad con un libro real (papel curvado, sombras, tipografías antiguas). Eso está pendiente.
-- **Una sola columna.** El orden de lectura va de arriba abajo; un texto a dos columnas saldría mezclado.
-- **Sin evaluación objetiva de la voz.** Las pausas y la naturalidad se valoran a oído.
+- **The test is synthetic.** It proves the pipeline works end to end, not the quality on a real book (curled pages, shadows, old typefaces). That is still to be tested.
+- **Single column only.** Reading order runs top to bottom; two-column text would come out mixed.
+- **No objective voice evaluation.** Pauses and naturalness are judged by ear.
 
-## 📚 Créditos
+## 📚 Credits
 
-- [Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M) (Apache 2.0): síntesis de voz.
-- [RapidOCR](https://github.com/RapidAI/RapidOCR) con el modelo [PP-OCRv5](https://github.com/PaddlePaddle/PaddleOCR): OCR.
-- Creado dentro de la serie [IA 365 modelos](https://github.com/ZappaGit/catalogo_ia_agentica), donde se documentan modelos de IA generativa.
+- [Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M) (Apache 2.0): speech synthesis.
+- [RapidOCR](https://github.com/RapidAI/RapidOCR) with the [PP-OCRv5](https://github.com/PaddlePaddle/PaddleOCR) model: OCR.
+- Built as part of the [IA 365 modelos](https://github.com/ZappaGit/catalogo_ia_agentica) series, which documents generative AI models.
 
-## ⚖️ Derechos de autor
+## ⚖️ Copyright
 
-Usa este lab solo con libros propios, de dominio público o con un uso personal permitido. Las carpetas `entrada/`, `trabajo/` y `salida/` no se suben al repositorio.
+Use this lab only with books you own, public-domain books, or for permitted personal use. The `input/`, `work/` and `output/` folders are not committed to the repository.
 
-## Licencia
+## License
 
 [MIT](LICENSE)

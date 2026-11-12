@@ -1,5 +1,5 @@
-# Versiones probadas en Windows 11, Python 3.12.10, solo CPU.
-# torch se instala aparte con el índice de CPU (ver README.md):
+# Versions tested on Windows 11, Python 3.12.10, CPU only.
+# torch is installed separately with the CPU index (see README.md):
 #   pip install torch --index-url https://download.pytorch.org/whl/cpu
 kokoro==0.9.4
 rapidocr==3.10.0
