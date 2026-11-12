@@ -1,0 +1,9 @@
+# Entorno virtual y caché de Python
+.venv/
+__pycache__/
+*.pyc
+
+# Imágenes de libros, resultados intermedios y audio: no van al repositorio
+entrada/
+trabajo/
+salida/
