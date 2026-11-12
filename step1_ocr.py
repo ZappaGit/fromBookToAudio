@@ -49,10 +49,17 @@ def load_pages(path):
 
 def group_into_lines(fragments):
     """Join OCR fragments that sit at the same height into lines of text."""
+    # Photographed pages are often tilted: measure the dominant slope and compare
+    # heights as if the page were straight, using the text height, not the box height.
+    skew = float(np.median([f.get("slope", 0.0) for f in fragments])) if fragments else 0.0
+
+    def level(f):
+        return (f["y0"] + f["y1"]) / 2 - skew * (f["x0"] + f["x1"]) / 2
+
     lines = []
-    for frag in sorted(fragments, key=lambda f: (f["y0"] + f["y1"]) / 2):
-        center = (frag["y0"] + frag["y1"]) / 2
-        height = frag["y1"] - frag["y0"]
+    for frag in sorted(fragments, key=level):
+        center = level(frag)
+        height = frag.get("text_height", frag["y1"] - frag["y0"])
         current = lines[-1] if lines else None
         if current and abs(center - current["center"]) < 0.5 * min(height, current["height"]):
             current["fragments"].append(frag)
@@ -85,8 +92,11 @@ def read_page(reader, page):
     for box, text, confidence in zip(result.boxes, result.txts, result.scores):
         xs = [p[0] for p in box]
         ys = [p[1] for p in box]
+        (tlx, tly), (trx, try_), (brx, bry), (blx, bly) = box
         frag = {"text": text.strip(), "x0": float(min(xs)), "y0": float(min(ys)),
-                "x1": float(max(xs)), "y1": float(max(ys)), "confidence": float(confidence)}
+                "x1": float(max(xs)), "y1": float(max(ys)), "confidence": float(confidence),
+                "slope": float((try_ - tly) / (trx - tlx)) if trx > tlx else 0.0,
+                "text_height": float((bly - tly + bry - try_) / 2)}
         center = (frag["y0"] + frag["y1"]) / 2
         if not frag["text"] or frag["confidence"] < config.MIN_CONFIDENCE:
             continue
