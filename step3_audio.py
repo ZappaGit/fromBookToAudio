@@ -117,6 +117,8 @@ def main():
 
     chapters = read_chapters(text_file)
     total = sum(len(p) + bool(t) for t, p in chapters)
+    if not total:
+        raise SystemExit(f"{text_file} has no text to read.")
     print(f"{len(chapters)} chapters, {total} text blocks. Voice: {config.VOICE}, speed {config.SPEED}")
 
     narrator = Narrator(audio_folder)

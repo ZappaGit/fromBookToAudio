@@ -57,6 +57,16 @@ code work\my-book\book.txt
 
 The result is in `output\my-book\`.
 
+Or run all three steps with one command:
+
+```powershell
+.\.venv\Scripts\python.exe run.py my-book [--force]
+```
+
+It stops at the first failing step with the reason and a hint (exit code 1, 2 or 3 = failed step).
+Re-running continues where it stopped. An existing `book.txt` is kept, so your corrections are
+safe; `--force` redoes the OCR and rebuilds `book.txt` from scratch.
+
 > **Note:** the Spanish voice needs [espeak-ng](https://github.com/espeak-ng/espeak-ng/releases) installed on the system.
 
 ## 🧩 The three steps
