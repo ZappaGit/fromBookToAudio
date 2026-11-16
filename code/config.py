@@ -15,7 +15,9 @@ import pathlib
 import sys
 
 # So that accented characters print correctly in the Windows console.
-sys.stdout.reconfigure(encoding="utf-8")
+# (pythonw, used by the launcher window, has no console: sys.stdout is None there.)
+if sys.stdout is not None:
+    sys.stdout.reconfigure(encoding="utf-8")
 
 ROOT_DIR = pathlib.Path(__file__).resolve().parent.parent   # project root, one level above code/
 INPUT_DIR = ROOT_DIR / "input"

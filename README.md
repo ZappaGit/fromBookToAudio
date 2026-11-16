@@ -75,6 +75,17 @@ It stops at the first failing step with the reason and a hint (exit code 1 to 4 
 Re-running continues where it stopped. An existing `book.txt` is kept, so your corrections are
 safe; `--force` redoes the OCR and rebuilds `book.txt` from scratch.
 
+### Or use the window
+
+Double-click **`fromBookToAudio.bat`** in the project root (or make a desktop shortcut to it). A window opens where you can:
+
+- pick a book from `input/`, or **add images from any folder** (they are copied to `input/<name>/`);
+- set the voice, language, speed, audio format, rotation, crop, margins, two pages per image, `book.md` and one document per image. These settings are saved in the book's `input/<book>/book.ini`, so the console commands use them too;
+- run everything or a single step (with *Force* and *Validate* options), stop it, and see the output;
+- open `book.txt`, `corrections.txt` and the input, work and audiobook folders, and apply reviewed corrections.
+
+The window only runs the same scripts as the console, so you can switch between them at any time.
+
 > **Note:** the Spanish voice needs [espeak-ng](https://github.com/espeak-ng/espeak-ng/releases) installed on the system.
 
 ## 📁 Project layout
@@ -83,12 +94,14 @@ safe; `--force` redoes the OCR and rebuilds `book.txt` from scratch.
 fromBookToAudio/
 ├── code/                  all Python code
 │   ├── run.py             runs steps 1 → 2 → 3 with one command
+│   ├── launcher.py        the window opened by fromBookToAudio.bat
 │   ├── step1_ocr.py
 │   ├── step2_text.py
 │   ├── step3_audio.py
 │   ├── step4_validate.py  optional: checks the audio against the text
 │   ├── config.py          all settings
 │   └── test_generate_pages.py
+├── fromBookToAudio.bat    double-click to open the window
 ├── input/<book>/          your photos or scans (not committed)
 ├── work/<book>/           OCR results, book.txt, audio cache (not committed)
 └── output/<book>/         the finished MP3s (not committed)
