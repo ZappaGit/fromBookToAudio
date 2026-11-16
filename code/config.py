@@ -4,7 +4,13 @@ Folder layout (one subfolder per book):
     input/<book>/    scanned or photographed pages, sorted by file name
     work/<book>/     intermediate results (OCR per page, book.txt, audio per paragraph)
     output/<book>/   final audiobook, one MP3 per chapter
+
+Any setting can be overridden for one book in input/<book>/book.ini, one per line,
+written as here, e.g.:
+    ROTATE = 270
+    DOUBLE_PAGES = True
 """
+import ast
 import pathlib
 import sys
 
@@ -38,6 +44,9 @@ CHAPTER_PATTERN = (
     r"|chapter|part|prologue|epilogue|introduction|preface)\b"
 )
 MAX_TITLE_LENGTH = 60
+MARKDOWN = False              # True: also write book.md, which keeps headings, lists and bold words
+PER_IMAGE = False             # True: every image is a document of its own: one audio file per image,
+                              # with its text (.txt, and .md if book.md exists) beside it in output/<book>/
 
 # ---------- Step 3: audio ----------
 VOICE_LANG = "e"              # Kokoro language code: 'e' Spanish (needs espeak-ng), 'a' US English
@@ -49,6 +58,12 @@ PAUSE_PARAGRAPH = 0.6         # seconds of silence between paragraphs
 PAUSE_TITLE = 1.2             # seconds of silence after a chapter title
 OUTPUT_FORMAT = "MP3"         # "MP3", "FLAC" or "WAV"
 
+# ---------- Step 4: validation (optional) ----------
+WHISPER_MODEL = "openai/whisper-large-v3-turbo"   # speech-to-text model that listens to the audio
+WHISPER_LANGUAGE = None       # None: taken from VOICE_LANG; or a Whisper name such as "spanish"
+MIN_SIMILARITY = 0.90         # blocks whose heard text matches the written text less than this
+                              # (0 to 1, by words) are flagged "review"
+
 
 def folders(book: str):
     """Return (input, work, output) folders for the book; creates the last two."""
@@ -57,9 +72,29 @@ def folders(book: str):
     output = OUTPUT_DIR / book
     if not source.is_dir():
         sys.exit(f"Image folder not found: {source}")
+    apply_book_settings(source / "book.ini")
     work.mkdir(parents=True, exist_ok=True)
     output.mkdir(parents=True, exist_ok=True)
     return source, work, output
+
+
+def apply_book_settings(path):
+    """Override the settings in this file with the ones in the book's book.ini, if any."""
+    if not path.is_file():
+        return
+    names = {n for n in globals() if n.isupper() and not n.endswith("_DIR")}
+    for number, raw in enumerate(path.read_text(encoding="utf-8-sig").splitlines(), 1):
+        line = raw.strip()
+        if not line or line.startswith("#"):
+            continue
+        name, equals, value = (part.strip() for part in line.partition("="))
+        if not equals or name.upper() not in names:
+            sys.exit(f"{path}, line {number}: unknown setting {name!r}")
+        try:
+            globals()[name.upper()] = ast.literal_eval(value)
+        except (ValueError, SyntaxError):
+            sys.exit(f"{path}, line {number}: invalid value {value!r} (text needs quotes)")
+    print(f"Book settings: {path}")
 
 
 def book_from_args() -> str:

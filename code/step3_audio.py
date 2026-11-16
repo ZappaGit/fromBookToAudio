@@ -1,15 +1,18 @@
 """Step 3 · Audio: turns work/<book>/book.txt into an audiobook with Kokoro-82M.
 
 Run from the repository folder with the virtual environment:
-    .\\.venv\\Scripts\\python.exe step3_audio.py <book>
+    .\\.venv\\Scripts\\python.exe code\\step3_audio.py <book> [--per-image]
 
 Writes one file per chapter to output/<book>/ (chapters are the lines starting with "# Title").
 The audio of each paragraph is saved in work/<book>/audio/, so if the process is interrupted
 or a paragraph is corrected, only what is missing or changed gets synthesized again.
 Spanish needs espeak-ng installed on the system (see README.md).
+With --per-image (or PER_IMAGE = True in book.ini) each chapter is one image, and its text is
+written beside its audio: NN-title.txt from book.txt, and NN-title.md from book.md if it exists.
 """
 import hashlib
 import re
+import sys
 import time
 import unicodedata
 
@@ -65,6 +68,12 @@ def file_name(number, title):
     return f"{number:02d}-{base}.{config.OUTPUT_FORMAT.lower()}"
 
 
+def cache_path(folder, text):
+    """File that holds the audio of one text block; the name depends on the text and the voice."""
+    key = f"{config.VOICE_LANG}|{config.VOICE}|{config.SPEED}|{text}"
+    return folder / f"{hashlib.sha1(key.encode('utf-8')).hexdigest()}.flac"
+
+
 class Narrator:
     """Synthesizes paragraphs with Kokoro and saves each one to disk so it is not repeated."""
 
@@ -75,8 +84,7 @@ class Narrator:
         self.new_audio_seconds = 0.0
 
     def audio(self, text):
-        key = f"{config.VOICE_LANG}|{config.VOICE}|{config.SPEED}|{text}"
-        path = self.folder / f"{hashlib.sha1(key.encode('utf-8')).hexdigest()}.flac"
+        path = cache_path(self.folder, text)
         if path.exists():
             return sf.read(path, dtype="float32")[0]
 
@@ -102,6 +110,21 @@ class Narrator:
         return audio
 
 
+def markdown_documents(path, count):
+    """Split book.md into its documents (step 2 with PER_IMAGE marks where each starts).
+
+    Returns one Markdown text per chapter, or [] if there is no book.md or it does not line up.
+    """
+    if not path.exists():
+        return []
+    parts = re.split(r"(?m)^<!-- document: .*? -->[ \t]*$", path.read_text(encoding="utf-8"))[1:]
+    if len(parts) != count:
+        print(f"{path.name} has {len(parts)} documents but book.txt has {count} chapters: "
+              f"no .md files written (run step 2 again with --force --markdown --per-image)")
+        return []
+    return [part.strip() + "\n" for part in parts]
+
+
 def silence(seconds):
     return np.zeros(int(seconds * config.SAMPLE_RATE), dtype=np.float32)
 
@@ -121,6 +144,9 @@ def main():
         raise SystemExit(f"{text_file} has no text to read.")
     print(f"{len(chapters)} chapters, {total} text blocks. Voice: {config.VOICE}, speed {config.SPEED}")
 
+    per_image = "--per-image" in sys.argv or config.PER_IMAGE
+    documents = markdown_documents(work / "book.md", len(chapters)) if per_image else []
+
     narrator = Narrator(audio_folder)
     done = 0
     total_duration = 0.0
@@ -137,6 +163,11 @@ def main():
                     samples += len(chunk)
                 done += 1
                 print(f"  [{done}/{total}] {block[:60]}")
+        if per_image:                                 # the text of the document beside its audio
+            text = "\n\n".join(([f"# {title}"] if title else []) + paragraphs) + "\n"
+            target.with_suffix(".txt").write_text(text, encoding="utf-8")
+            if documents:
+                target.with_suffix(".md").write_text(documents[number - 1], encoding="utf-8")
         duration = samples / config.SAMPLE_RATE
         total_duration += duration
         print(f"{target.name}: {duration / 60:.1f} min")
