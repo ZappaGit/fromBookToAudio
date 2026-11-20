@@ -1,0 +1,45 @@
+name: Bug report
+description: Something does not work as described in the README
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: "Please do **not** attach book pages, photos or audio. A small synthetic image that reproduces the problem is enough."
+  - type: dropdown
+    id: step
+    attributes:
+      label: Step where it failed
+      options:
+        - Step 1 (OCR)
+        - Step 2 (text)
+        - Step 3 (audio)
+        - Step 4 (validation)
+        - run.py
+        - Launcher window (fromBookToAudio.bat)
+        - Other / not sure
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: Command or steps to reproduce
+      render: powershell
+  - type: textarea
+    id: output
+    attributes:
+      label: Console output
+      description: Paste the full output, or the relevant part of it.
+      render: text
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      placeholder: "Windows 11, Python 3.12.x, RapidOCR x.y, Kokoro x.y"
+    validations:
+      required: true
