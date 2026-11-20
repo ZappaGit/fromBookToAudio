@@ -10,3 +10,10 @@ output/
 
 # Local Claude Code instructions
 CLAUDE.md
+
+# Secrets and local environment files
+.env
+.env.*
+*.key
+*.pem
+*.token
