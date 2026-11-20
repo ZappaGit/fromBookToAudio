@@ -3,7 +3,7 @@
 #   pip install torch --index-url https://download.pytorch.org/whl/cpu
 kokoro==0.9.4
 rapidocr==3.10.0
-onnxruntime==1.31.1
+onnxruntime==1.32.0
 soundfile==0.14.0
 pillow==13.0.0
 numpy==2.5.5
